@@ -1,11 +1,45 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera as CameraIcon, RotateCcw, Upload, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useCamera } from "@/hooks/useCamera";
+import { useToast } from "@/hooks/use-toast";
 
 const Camera = () => {
+  const { 
+    videoRef, 
+    canvasRef, 
+    isStreaming, 
+    error, 
+    startCamera, 
+    stopCamera, 
+    capturePhoto, 
+    switchCamera 
+  } = useCamera();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    startCamera();
+    return () => stopCamera();
+  }, [startCamera, stopCamera]);
+
   const handleCapturePhoto = () => {
-    // TODO: Implement camera functionality
-    console.log("Capturing photo...");
+    const photoData = capturePhoto();
+    if (photoData) {
+      // TODO: Store the captured image and navigate to transform page
+      toast({
+        title: "Photo captured!",
+        description: "Proceeding to transformation options.",
+      });
+      navigate("/transform");
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to capture photo. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -23,20 +57,46 @@ const Camera = () => {
 
       {/* Camera Viewfinder */}
       <div className="flex-1 relative bg-gray-900 flex items-center justify-center">
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="text-white text-center">
+        {error ? (
+          <div className="text-white text-center p-6">
             <CameraIcon className="h-16 w-16 mx-auto mb-4 opacity-50" />
-            <p className="text-lg mb-2">Camera Preview</p>
-            <p className="text-sm opacity-75">Camera functionality coming soon</p>
+            <p className="text-lg mb-2">Camera Error</p>
+            <p className="text-sm opacity-75 mb-4">{error}</p>
+            <Button variant="outline" onClick={startCamera} className="text-black">
+              Retry Camera Access
+            </Button>
           </div>
-        </div>
+        ) : (
+          <>
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              playsInline
+              muted
+            />
+            <canvas ref={canvasRef} className="hidden" />
+            
+            {!isStreaming && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                <div className="text-white text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+                  <p className="text-sm">Starting camera...</p>
+                </div>
+              </div>
+            )}
 
-        {/* Face Detection Overlay Guide */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-64 h-80 border-2 border-white/50 rounded-full flex items-end justify-center pb-8">
-            <div className="text-white/70 text-sm">Position your face here</div>
-          </div>
-        </div>
+            {/* Face Detection Overlay Guide */}
+            {isStreaming && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-64 h-80 border-2 border-white/50 rounded-full flex items-end justify-center pb-8">
+                  <div className="text-white/70 text-sm bg-black/50 px-3 py-1 rounded">
+                    Position your face here
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Controls */}
@@ -68,7 +128,8 @@ const Camera = () => {
             variant="ghost" 
             size="lg" 
             className="text-white hover:bg-white/20 w-16 h-16 rounded-full"
-            onClick={() => console.log("Flip camera")}
+            onClick={switchCamera}
+            disabled={!isStreaming}
           >
             <RotateCcw className="h-6 w-6" />
           </Button>
