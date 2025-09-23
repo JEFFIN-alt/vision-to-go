@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Upload as UploadIcon, ArrowLeft, Image, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { usePhoto } from "@/contexts/PhotoContext";
 
 const Upload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -12,6 +13,7 @@ const Upload = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setCurrentPhoto, logError } = usePhoto();
 
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -44,9 +46,18 @@ const Upload = () => {
   };
 
   const handleContinue = () => {
-    if (selectedFile) {
-      // TODO: Store the selected image and navigate to transform page
-      navigate("/transform");
+    if (selectedFile && preview) {
+      try {
+        setCurrentPhoto(preview);
+        navigate("/transform");
+      } catch (error: any) {
+        logError('Upload navigation failed', { error: error.message });
+        toast({
+          title: "Error",
+          description: "Failed to process uploaded photo.",
+          variant: "destructive",
+        });
+      }
     }
   };
 

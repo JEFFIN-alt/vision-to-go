@@ -50,9 +50,19 @@ export const useCamera = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
 
-    ctx.drawImage(video, 0, 0);
-    return canvas.toDataURL('image/jpeg', 0.9);
-  }, []);
+    // Flip image if using front camera
+    if (facingMode === 'user') {
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -canvas.width, 0);
+    } else {
+      ctx.drawImage(video, 0, 0);
+    }
+    
+    const photoData = canvas.toDataURL('image/jpeg', 0.9);
+    // Auto-stop camera after capture
+    stopCamera();
+    return photoData;
+  }, [facingMode, stopCamera]);
 
   const switchCamera = useCallback(() => {
     stopCamera();

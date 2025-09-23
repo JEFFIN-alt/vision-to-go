@@ -4,6 +4,7 @@ import { Camera as CameraIcon, RotateCcw, Upload, ArrowLeft } from "lucide-react
 import { Link, useNavigate } from "react-router-dom";
 import { useCamera } from "@/hooks/useCamera";
 import { useToast } from "@/hooks/use-toast";
+import { usePhoto } from "@/contexts/PhotoContext";
 
 const Camera = () => {
   const { 
@@ -18,6 +19,7 @@ const Camera = () => {
   } = useCamera();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setCurrentPhoto, logError } = usePhoto();
 
   useEffect(() => {
     startCamera();
@@ -25,15 +27,20 @@ const Camera = () => {
   }, [startCamera, stopCamera]);
 
   const handleCapturePhoto = () => {
-    const photoData = capturePhoto();
-    if (photoData) {
-      // TODO: Store the captured image and navigate to transform page
-      toast({
-        title: "Photo captured!",
-        description: "Proceeding to transformation options.",
-      });
-      navigate("/transform");
-    } else {
+    try {
+      const photoData = capturePhoto();
+      if (photoData) {
+        setCurrentPhoto(photoData);
+        toast({
+          title: "Photo captured!",
+          description: "Proceeding to transformation options.",
+        });
+        navigate("/transform");
+      } else {
+        throw new Error("Failed to capture photo data");
+      }
+    } catch (error: any) {
+      logError('Camera capture failed', { error: error.message });
       toast({
         title: "Error",
         description: "Failed to capture photo. Please try again.",

@@ -2,11 +2,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Sparkles, User, Paintbrush, Scissors } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, Sparkles, User, Paintbrush, Scissors, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { usePhoto } from "@/contexts/PhotoContext";
+import { useAITransformation } from "@/hooks/useAITransformation";
+import { useToast } from "@/hooks/use-toast";
 
 const Transform = () => {
   const [selectedCategory, setSelectedCategory] = useState("hairstyles");
+  const { currentPhoto, isProcessing, processingProgress, error } = usePhoto();
+  const { transformPhoto, isTransforming } = useAITransformation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const categories = [
     {
@@ -44,9 +52,37 @@ const Transform = () => {
     }
   ];
 
-  const handleApplyTransformation = (categoryId: string, styleName: string) => {
-    // TODO: Implement AI transformation
-    console.log(`Applying ${styleName} from ${categoryId}`);
+  const handleApplyTransformation = async (categoryId: string, styleName: string) => {
+    if (!currentPhoto) {
+      toast({
+        title: "No photo available",
+        description: "Please capture or upload a photo first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const transformedUrl = await transformPhoto({
+        category: categoryId as 'hairstyles' | 'makeup' | 'facial',
+        style: styleName,
+        intensity: 1.0,
+      });
+
+      if (transformedUrl) {
+        toast({
+          title: "Transformation complete!",
+          description: "Your new look is ready.",
+        });
+        navigate("/results");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Transformation failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -66,15 +102,53 @@ const Transform = () => {
         {/* Photo Preview */}
         <Card className="mb-6">
           <CardContent className="p-4">
-            <div className="bg-gray-100 rounded-lg h-64 flex items-center justify-center">
-              <div className="text-center text-muted-foreground">
-                <User className="h-16 w-16 mx-auto mb-2 opacity-50" />
-                <p>Your Photo Preview</p>
-                <p className="text-sm">Photo processing coming soon</p>
-              </div>
+            <div className="bg-muted rounded-lg h-64 flex items-center justify-center overflow-hidden">
+              {currentPhoto ? (
+                <img 
+                  src={currentPhoto} 
+                  alt="Your photo" 
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              ) : (
+                <div className="text-center text-muted-foreground">
+                  <User className="h-16 w-16 mx-auto mb-2 opacity-50" />
+                  <p>No Photo Selected</p>
+                  <p className="text-sm">Capture or upload a photo to start</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
+
+        {/* Processing Progress */}
+        {isProcessing && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm font-medium">Processing your transformation...</span>
+                </div>
+                <Progress value={processingProgress} className="w-full" />
+                <p className="text-xs text-muted-foreground">
+                  This may take a few moments
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <Card className="mb-6 border-destructive">
+            <CardContent className="p-4">
+              <div className="text-destructive">
+                <p className="font-medium">Processing Error</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Transformation Categories */}
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -110,8 +184,16 @@ const Transform = () => {
                       <Button 
                         className="w-full" 
                         onClick={() => handleApplyTransformation(category.id, style.name)}
+                        disabled={!currentPhoto || isTransforming || isProcessing}
                       >
-                        Apply Style
+                        {isTransforming ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Applying...
+                          </>
+                        ) : (
+                          "Apply Style"
+                        )}
                       </Button>
                     </CardContent>
                   </Card>
