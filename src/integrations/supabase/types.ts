@@ -14,7 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      feedback: {
+        Row: {
+          admin_response: string | null
+          category: string
+          created_at: string
+          id: string
+          message: string
+          rating: number | null
+          status: string | null
+          subject: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_response?: string | null
+          category: string
+          created_at?: string
+          id?: string
+          message: string
+          rating?: number | null
+          status?: string | null
+          subject: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_response?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          rating?: number | null
+          status?: string | null
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          analytics_enabled: boolean | null
+          created_at: string
+          email_updates: boolean | null
+          full_name: string | null
+          gender: string | null
+          id: string
+          push_notifications: boolean | null
+          save_transformations: boolean | null
+          theme_preference: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analytics_enabled?: boolean | null
+          created_at?: string
+          email_updates?: boolean | null
+          full_name?: string | null
+          gender?: string | null
+          id?: string
+          push_notifications?: boolean | null
+          save_transformations?: boolean | null
+          theme_preference?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analytics_enabled?: boolean | null
+          created_at?: string
+          email_updates?: boolean | null
+          full_name?: string | null
+          gender?: string | null
+          id?: string
+          push_notifications?: boolean | null
+          save_transformations?: boolean | null
+          theme_preference?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transformations: {
+        Row: {
+          created_at: string
+          id: string
+          is_favorite: boolean | null
+          original_image_url: string
+          settings: Json | null
+          style_name: string
+          transformation_type: string
+          transformed_image_url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          original_image_url: string
+          settings?: Json | null
+          style_name: string
+          transformation_type: string
+          transformed_image_url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          original_image_url?: string
+          settings?: Json | null
+          style_name?: string
+          transformation_type?: string
+          transformed_image_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
