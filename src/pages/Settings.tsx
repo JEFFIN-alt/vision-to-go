@@ -2,16 +2,81 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, User, Bell, Shield, HelpCircle, LogOut } from "lucide-react";
+import { ArrowLeft, User, Bell, Shield, HelpCircle, LogOut, Moon, Sun, Palette, MessageSquare } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import FeedbackSystem from "@/components/FeedbackSystem";
 
 const Settings = () => {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [preferences, setPreferences] = useState({
+    pushNotifications: true,
+    emailUpdates: true,
+    saveTransformations: true,
+    analyticsEnabled: true,
+  });
+
+  useEffect(() => {
+    loadUserPreferences();
+  }, [user]);
+
+  const loadUserPreferences = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('push_notifications, email_updates, save_transformations, analytics_enabled')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profile) {
+        setPreferences({
+          pushNotifications: profile.push_notifications ?? true,
+          emailUpdates: profile.email_updates ?? true,
+          saveTransformations: profile.save_transformations ?? true,
+          analyticsEnabled: profile.analytics_enabled ?? true,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+    }
+  };
+
+  const updatePreference = async (key: keyof typeof preferences, value: boolean) => {
+    if (!user) return;
+
+    setPreferences(prev => ({ ...prev, [key]: value }));
+
+    try {
+      const columnMap = {
+        pushNotifications: 'push_notifications',
+        emailUpdates: 'email_updates', 
+        saveTransformations: 'save_transformations',
+        analyticsEnabled: 'analytics_enabled',
+      };
+
+      await supabase
+        .from('profiles')
+        .upsert({ 
+          user_id: user.id, 
+          [columnMap[key]]: value 
+        });
+    } catch (error) {
+      console.error('Error updating preference:', error);
+      // Revert on error
+      setPreferences(prev => ({ ...prev, [key]: !value }));
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -29,6 +94,14 @@ const Settings = () => {
       });
     }
   };
+
+  if (showFeedback) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <FeedbackSystem onClose={() => setShowFeedback(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,6 +137,44 @@ const Settings = () => {
           </CardContent>
         </Card>
 
+        {/* Appearance */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Palette className="h-5 w-5" />
+              <div>
+                <CardTitle>Appearance</CardTitle>
+                <CardDescription>Customize your app experience</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="theme-select">Theme</Label>
+              <Select value={theme} onValueChange={setTheme}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">
+                    <div className="flex items-center gap-2">
+                      <Sun className="h-4 w-4" />
+                      Light
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="dark">
+                    <div className="flex items-center gap-2">
+                      <Moon className="h-4 w-4" />
+                      Dark
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Notifications */}
         <Card>
           <CardHeader>
@@ -78,11 +189,19 @@ const Settings = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="push-notifications">Push Notifications</Label>
-              <Switch id="push-notifications" />
+              <Switch 
+                id="push-notifications" 
+                checked={preferences.pushNotifications}
+                onCheckedChange={(checked) => updatePreference('pushNotifications', checked)}
+              />
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="email-updates">Email Updates</Label>
-              <Switch id="email-updates" />
+              <Switch 
+                id="email-updates" 
+                checked={preferences.emailUpdates}
+                onCheckedChange={(checked) => updatePreference('emailUpdates', checked)}
+              />
             </div>
           </CardContent>
         </Card>
@@ -101,11 +220,19 @@ const Settings = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="save-transformations">Save Transformations</Label>
-              <Switch id="save-transformations" defaultChecked />
+              <Switch 
+                id="save-transformations" 
+                checked={preferences.saveTransformations}
+                onCheckedChange={(checked) => updatePreference('saveTransformations', checked)}
+              />
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="analytics">Usage Analytics</Label>
-              <Switch id="analytics" defaultChecked />
+              <Switch 
+                id="analytics" 
+                checked={preferences.analyticsEnabled}
+                onCheckedChange={(checked) => updatePreference('analyticsEnabled', checked)}
+              />
             </div>
           </CardContent>
         </Card>
@@ -122,8 +249,13 @@ const Settings = () => {
             <Button variant="ghost" className="w-full justify-start">
               FAQ
             </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              Contact Support
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start"
+              onClick={() => setShowFeedback(true)}
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Send Feedback
             </Button>
             <Button variant="ghost" className="w-full justify-start">
               Privacy Policy

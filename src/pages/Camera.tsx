@@ -1,10 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera as CameraIcon, RotateCcw, Upload, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCamera } from "@/hooks/useCamera";
 import { useToast } from "@/hooks/use-toast";
 import { usePhoto } from "@/contexts/PhotoContext";
+import { useGenderDetection } from "@/hooks/useGenderDetection";
+import { useAuth } from "@/contexts/AuthContext";
+import GenderConfirmationDialog from "@/components/GenderConfirmationDialog";
 
 const Camera = () => {
   const { 
@@ -19,23 +22,47 @@ const Camera = () => {
   } = useCamera();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { setCurrentPhoto, logError } = usePhoto();
+  const { detectGender, saveGenderPreference, isDetecting } = useGenderDetection();
+  const [showGenderDialog, setShowGenderDialog] = useState(false);
+  const [genderDetectionResult, setGenderDetectionResult] = useState<any>(null);
 
   useEffect(() => {
     startCamera();
     return () => stopCamera();
   }, [startCamera, stopCamera]);
 
-  const handleCapturePhoto = () => {
+  const handleCapturePhoto = async () => {
     try {
       const photoData = capturePhoto();
       if (photoData) {
         setCurrentPhoto(photoData);
+        
         toast({
           title: "Photo captured!",
-          description: "Proceeding to transformation options.",
+          description: "Analyzing your photo for the best style recommendations...",
         });
-        navigate("/transform");
+
+        // Detect gender for personalized recommendations
+        try {
+          const genderResult = await detectGender(photoData);
+          setGenderDetectionResult(genderResult);
+          
+          if (genderResult.needsConfirmation && user) {
+            setShowGenderDialog(true);
+          } else {
+            // Save detected gender if confident enough
+            if (genderResult.detectedGender && genderResult.confidence > 0.8 && user) {
+              await saveGenderPreference(user.id, genderResult.detectedGender);
+            }
+            navigate("/transform");
+          }
+        } catch (error) {
+          // Continue without gender detection if it fails
+          console.warn('Gender detection failed:', error);
+          navigate("/transform");
+        }
       } else {
         throw new Error("Failed to capture photo data");
       }
@@ -47,6 +74,22 @@ const Camera = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleGenderConfirm = async (gender: any) => {
+    if (user) {
+      try {
+        await saveGenderPreference(user.id, gender);
+        toast({
+          title: "Preferences saved!",
+          description: "We'll show you personalized style recommendations.",
+        });
+      } catch (error) {
+        console.error('Error saving gender preference:', error);
+      }
+    }
+    setShowGenderDialog(false);
+    navigate("/transform");
   };
 
   return (
@@ -148,6 +191,18 @@ const Camera = () => {
           </p>
         </div>
       </div>
+
+      {/* Gender Confirmation Dialog */}
+      <GenderConfirmationDialog
+        isOpen={showGenderDialog}
+        detectedGender={genderDetectionResult?.detectedGender}
+        confidence={genderDetectionResult?.confidence || 0}
+        onConfirm={handleGenderConfirm}
+        onCancel={() => {
+          setShowGenderDialog(false);
+          navigate("/transform");
+        }}
+      />
     </div>
   );
 };
