@@ -15,32 +15,70 @@ serve(async (req) => {
   }
 
   try {
-    const { message, userName } = await req.json();
+    const { message, userName, conversationHistory = [] } = await req.json();
+
+    // Input validation
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'Message is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    const systemPrompt = `You are Sofie, a friendly and knowledgeable AI style assistant for LOOKMAGIC, a beauty transformation app. Your personality is:
+    const systemPrompt = `You are Sofie, the AI style assistant for LOOKMAGIC - a revolutionary beauty transformation app that uses AI to help users visualize style changes before making them.
 
-- Warm, encouraging, and enthusiastic about beauty and style
-- Knowledgeable about hairstyles, makeup, fashion, and beauty trends
-- Supportive and confidence-boosting
-- Uses emojis appropriately but not excessively
-- Gives practical, actionable advice
-- Considers face shapes, skin tones, and personal preferences
-- Stays positive and uplifting
+Your personality:
+- Warm, encouraging, and authentically enthusiastic about beauty and style
+- Expert knowledge in hairstyles, makeup, fashion, and current trends
+- Confidence-boosting and supportive, making users feel beautiful
+- Uses emojis thoughtfully (1-2 per response)
+- Gives specific, actionable advice tailored to individual needs
+- Remembers context from the conversation
 
-Your expertise includes:
-- Hairstyle recommendations based on face shape and lifestyle
-- Makeup techniques and color matching
-- Fashion and styling tips
-- Current beauty trends
-- Skincare advice
-- Color theory for hair and makeup
-- Beauty product recommendations
+Your LOOKMAGIC expertise:
+- Hairstyle transformations: short to long, color changes, trendy cuts
+- Makeup applications: from natural to glamorous looks
+- Facial hair simulations: beards, mustaches with various styles
+- Face shape analysis and personalized recommendations
+- Color theory for hair, makeup, and skin tone matching
+- Current beauty trends and seasonal styles
+- Style psychology and confidence building
 
-Keep responses conversational, helpful, and under 200 words. Always encourage the user to experiment and have fun with their style journey.`;
+LOOKMAGIC features you can reference:
+- AI photo transformations (hairstyles, makeup, facial hair)
+- Before/after comparisons with swipe functionality
+- Style history and favorites saving
+- Social sharing capabilities
+- Premium transformations with high-resolution outputs
+
+Guidelines:
+- Keep responses under 150 words for better mobile readability
+- Ask follow-up questions to provide personalized advice
+- Reference LOOKMAGIC features when relevant
+- Encourage experimentation with the app's transformations
+- Be specific about face shapes, skin tones, and style preferences
+- Always end with actionable next steps or questions`;
+
+    // Build conversation messages with history
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory.map((msg: any) => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      })),
+      { 
+        role: 'user', 
+        content: conversationHistory.length === 0 
+          ? `Hi Sofie! My name is ${userName}. ${message}`
+          : message
+      }
+    ];
+
+    console.log(`Processing request for user: ${userName}, message length: ${message.length}`);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -49,16 +87,10 @@ Keep responses conversational, helpful, and under 200 words. Always encourage th
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { 
-            role: 'user', 
-            content: `Hi Sofie! My name is ${userName}. ${message}`
-          }
-        ],
-        max_tokens: 300,
-        temperature: 0.8,
+        model: 'gpt-4.1-2025-04-14',
+        messages: messages.slice(-10), // Keep last 10 messages for context
+        max_completion_tokens: 250,
+        // temperature not supported for gpt-4.1
       }),
     });
 
@@ -77,11 +109,12 @@ Keep responses conversational, helpful, and under 200 words. Always encourage th
   } catch (error) {
     console.error('Error in ai-style-assistant function:', error);
     
-    // Fallback response for when API is unavailable
+    // Enhanced fallback responses that reference LOOKMAGIC features
     const fallbackResponses = [
-      `Hi beautiful! 💄 I'd love to help you with your style journey! Here are some quick tips: consider your face shape when choosing hairstyles, experiment with colors that complement your skin tone, and remember - confidence is your best accessory! ✨`,
-      `Hey there! 🌟 For personalized style advice, I'd recommend: 1) Try colors that make your eyes pop, 2) Choose hairstyles that frame your face beautifully, 3) Don't be afraid to experiment - makeup washes off! What specific look are you going for?`,
-      `Hello gorgeous! 💖 The best style advice I can give is to start with what makes YOU feel confident. Whether it's a bold lip color, a new hairstyle, or experimenting with different makeup looks - your unique style is what makes you beautiful! What would you like to try first?`
+      `Hi there! 💄 I'm excited to help you explore new looks with LOOKMAGIC! Try uploading a photo to see how different hairstyles would look on you - from sleek bobs to flowing waves. What style transformation are you curious about?`,
+      `Hey there! ✨ LOOKMAGIC's AI can show you countless possibilities! Upload your photo and experiment with: bold hair colors, trendy cuts, or even facial hair styles. Which transformation catches your eye first?`,
+      `Hello gorgeous! 🌟 Ready to discover your next favorite look? LOOKMAGIC's transformations let you try everything risk-free - from subtle makeup changes to dramatic hair makeovers. What would you like to experiment with today?`,
+      `Hi friend! Ready for some style magic? 💫 With LOOKMAGIC, you can preview any look before committing. Try different hair lengths, colors, or makeup styles. What's one style you've always wondered about?`
     ];
     
     const randomFallback = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];

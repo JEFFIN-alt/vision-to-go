@@ -22,16 +22,38 @@ interface AIAssistantProps {
 }
 
 const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onMinimize }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      type: 'assistant',
-      content: "Hi! I'm Sofie, your AI style assistant! 💄✨ I'm here to help you discover amazing new looks, suggest perfect styles for your face shape, and guide you through transformations. What would you like to explore today?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // Load conversation from localStorage
+    const savedMessages = localStorage.getItem('sofie-conversation');
+    if (savedMessages) {
+      try {
+        const parsed = JSON.parse(savedMessages);
+        return parsed.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+      } catch {
+        // If parsing fails, use default
+      }
+    }
+    
+    return [
+      {
+        id: '1',
+        type: 'assistant',
+        content: "Hi! I'm Sofie, your AI style assistant! 💄✨ I'm here to help you discover amazing new looks with LOOKMAGIC's AI transformations. Upload a photo to try different hairstyles, makeup looks, or even facial hair! What style are you curious about?",
+        timestamp: new Date(),
+      },
+    ];
+  });
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [quickSuggestions] = useState([
+    "What hairstyle suits my face shape?",
+    "Show me trending makeup looks",
+    "How do I choose hair colors?",
+    "Best styles for my age?"
+  ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -44,12 +66,24 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onMinimize }
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Save conversation to localStorage
+    localStorage.setItem('sofie-conversation', JSON.stringify(messages));
+  }, [messages]);
+
   const generateStyleAdvice = async (userMessage: string): Promise<string> => {
     try {
+      // Get conversation history (last 8 messages for context)
+      const conversationHistory = messages.slice(-8).map(msg => ({
+        type: msg.type,
+        content: msg.content
+      }));
+
       const { data, error } = await supabase.functions.invoke('ai-style-assistant', {
         body: {
           message: userMessage,
           userName: user?.email?.split('@')[0] || 'friend',
+          conversationHistory,
         },
       });
 
@@ -57,17 +91,18 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onMinimize }
       return data.response;
     } catch (error) {
       console.error('Error generating style advice:', error);
-      return "I'm having trouble connecting right now, but here are some quick style tips: Consider your face shape when choosing hairstyles, try colors that complement your skin tone, and remember that confidence is your best accessory! 💖";
+      return "I'm having trouble connecting right now, but here's a quick tip: Upload a photo to LOOKMAGIC and try our AI transformations! You can experiment with different hairstyles and makeup looks risk-free. What style change are you considering? 💖";
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+  const handleSendMessage = async (messageText?: string) => {
+    const text = messageText || inputMessage.trim();
+    if (!text || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
-      content: inputMessage.trim(),
+      content: text,
       timestamp: new Date(),
     };
 
@@ -97,6 +132,17 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onMinimize }
     }
   };
 
+  const clearConversation = () => {
+    const initialMessage = {
+      id: '1',
+      type: 'assistant' as const,
+      content: "Hi! I'm Sofie, your AI style assistant! 💄✨ I'm here to help you discover amazing new looks with LOOKMAGIC's AI transformations. What style are you curious about?",
+      timestamp: new Date(),
+    };
+    setMessages([initialMessage]);
+    localStorage.removeItem('sofie-conversation');
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -114,6 +160,15 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onMinimize }
           <CardTitle className="text-lg">Sofie AI</CardTitle>
         </div>
         <div className="flex gap-1">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={clearConversation}
+            className="h-6 w-6 p-0 text-primary-foreground hover:bg-white/20"
+            title="Clear conversation"
+          >
+            <span className="text-xs">🔄</span>
+          </Button>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -176,6 +231,27 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onMinimize }
           <div ref={messagesEndRef} />
         </ScrollArea>
 
+        {/* Quick suggestions - show only if no conversation yet */}
+        {messages.length <= 1 && !isLoading && (
+          <div className="px-4 pb-2">
+            <div className="text-xs text-muted-foreground mb-2">Quick suggestions:</div>
+            <div className="flex flex-wrap gap-1">
+              {quickSuggestions.map((suggestion, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 px-2"
+                  onClick={() => handleSendMessage(suggestion)}
+                  disabled={isLoading}
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="p-4 border-t">
           <div className="flex gap-2">
             <Input
@@ -187,7 +263,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onMinimize }
               disabled={isLoading}
             />
             <Button 
-              onClick={handleSendMessage} 
+              onClick={() => handleSendMessage()} 
               disabled={!inputMessage.trim() || isLoading}
               size="sm"
               className="px-3"
