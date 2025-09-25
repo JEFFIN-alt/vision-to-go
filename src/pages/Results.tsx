@@ -1,193 +1,189 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Download, Share2, RefreshCw, Heart } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { Share2, Download, Heart, RotateCcw, Sparkles } from "lucide-react";
 import { usePhoto } from "@/contexts/PhotoContext";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Results = () => {
-  const [showComparison, setShowComparison] = useState(false);
   const { currentPhoto, transformedPhoto, clearPhotos } = usePhoto();
+  const [showBefore, setShowBefore] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!currentPhoto || !transformedPhoto) {
+      navigate("/camera");
+    }
+  }, [currentPhoto, transformedPhoto, navigate]);
 
   const handleShare = async () => {
     if (!transformedPhoto) return;
 
     try {
       if (navigator.share) {
-        // Use native sharing if available
-        const response = await fetch(transformedPhoto);
-        const blob = await response.blob();
-        const file = new File([blob], 'lookmagic-transformation.jpg', { type: 'image/jpeg' });
-        
         await navigator.share({
-          title: 'My LOOKMAGIC Transformation',
-          text: 'Check out my new look created with LOOKMAGIC!',
-          files: [file]
+          title: "My LOOKMAGIC Transformation",
+          text: "Check out my amazing style transformation with LOOKMAGIC!",
+          url: window.location.href,
         });
       } else {
-        // Fallback to copying URL
-        await navigator.clipboard.writeText(transformedPhoto);
+        await navigator.clipboard.writeText(window.location.href);
         toast({
           title: "Link copied!",
-          description: "Share link has been copied to clipboard.",
+          description: "Share link copied to clipboard",
         });
       }
     } catch (error) {
       toast({
-        title: "Share failed",
-        description: "Unable to share transformation.",
+        title: "Error",
+        description: "Failed to share transformation",
         variant: "destructive",
       });
     }
   };
 
-  const handleDownload = () => {
-    if (!transformedPhoto) return;
+  const handleSave = async () => {
+    if (!user || !currentPhoto || !transformedPhoto) return;
 
-    const link = document.createElement('a');
-    link.href = transformedPhoto;
-    link.download = `lookmagic-transformation-${Date.now()}.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("transformations").insert({
+        user_id: user.id,
+        original_image_url: currentPhoto,
+        transformed_image_url: transformedPhoto,
+        transformation_type: "hairstyle", // Default for now
+        style_name: "AI Generated Style",
+        is_favorite: isFavorited,
+        settings: {},
+      });
 
-    toast({
-      title: "Download started!",
-      description: "Your transformation is being downloaded.",
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Success!",
+        description: "Transformation saved to your history",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save transformation",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleNewTransformation = () => {
+  const handleTryAgain = () => {
     clearPhotos();
+    navigate("/camera");
   };
 
-  if (!transformedPhoto) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground mb-4">No transformation available</p>
-            <Button asChild>
-              <Link to="/camera">Take New Photo</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  const toggleFavorite = () => {
+    setIsFavorited(!isFavorited);
+  };
+
+  if (!currentPhoto || !transformedPhoto) {
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="flex items-center justify-between p-4 bg-card border-b border-border">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/transform">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        </Button>
-        <h1 className="text-lg font-semibold">Your Transformation</h1>
-        <Button variant="ghost" size="sm" onClick={handleNewTransformation} asChild>
-          <Link to="/camera">
-            <RefreshCw className="h-5 w-5" />
-          </Link>
-        </Button>
-      </header>
-
-      <div className="container mx-auto px-4 py-6">
-        {/* Before/After Toggle */}
-        <div className="mb-4">
-          <div className="flex bg-muted rounded-lg p-1">
-            <Button
-              variant={!showComparison ? "default" : "ghost"}
-              size="sm"
-              className="flex-1"
-              onClick={() => setShowComparison(false)}
-            >
-              New Look
-            </Button>
-            <Button
-              variant={showComparison ? "default" : "ghost"}
-              size="sm"
-              className="flex-1"
-              onClick={() => setShowComparison(true)}
-            >
-              Before/After
-            </Button>
-          </div>
+    <div className="min-h-screen bg-background p-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            Your Transformation
+          </h1>
+          <p className="text-muted-foreground">
+            Swipe or tap to compare before and after
+          </p>
         </div>
 
-        {/* Image Display */}
-        <Card className="mb-6">
-          <CardContent className="p-0">
-            <div className="relative">
-              {!showComparison ? (
-                // Show only transformed image
-                <img
-                  src={transformedPhoto}
-                  alt="Transformed look"
-                  className="w-full h-auto rounded-lg"
-                />
-              ) : (
-                // Show before/after comparison
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-center">Before</p>
-                    <img
-                      src={currentPhoto || ''}
-                      alt="Original"
-                      className="w-full h-auto rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-center">After</p>
-                    <img
-                      src={transformedPhoto}
-                      alt="Transformed"
-                      className="w-full h-auto rounded-lg"
-                    />
-                  </div>
-                </div>
-              )}
+        {/* Image Comparison */}
+        <Card className="relative overflow-hidden mb-6">
+          <div className="aspect-[3/4] relative">
+            <img
+              src={showBefore ? currentPhoto : transformedPhoto}
+              alt={showBefore ? "Before transformation" : "After transformation"}
+              className="w-full h-full object-cover cursor-pointer"
+              onClick={() => setShowBefore(!showBefore)}
+            />
+            
+            {/* Overlay indicator */}
+            <div className="absolute top-4 left-4">
+              <div className="bg-black/70 text-white px-3 py-1 rounded-full text-sm font-medium">
+                {showBefore ? "Before" : "After"}
+              </div>
             </div>
-          </CardContent>
+
+            {/* Tap indicator */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-black/50 text-white px-4 py-2 rounded-full text-sm animate-pulse">
+                Tap to compare
+              </div>
+            </div>
+          </div>
         </Card>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Button onClick={handleShare} className="flex items-center gap-2">
-            <Share2 className="h-4 w-4" />
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <Button
+            variant="outline"
+            onClick={toggleFavorite}
+            className={isFavorited ? "text-red-500 border-red-500" : ""}
+          >
+            <Heart className={`h-4 w-4 mr-2 ${isFavorited ? "fill-current" : ""}`} />
+            {isFavorited ? "Favorited" : "Favorite"}
+          </Button>
+          
+          <Button variant="outline" onClick={handleShare}>
+            <Share2 className="h-4 w-4 mr-2" />
             Share
           </Button>
-          <Button variant="outline" onClick={handleDownload} className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Download
-          </Button>
         </div>
 
-        {/* Quick Actions */}
+        {/* Save and Try Again */}
         <div className="space-y-3">
-          <Button asChild className="w-full" variant="outline">
-            <Link to="/transform">Try Another Style</Link>
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className="w-full"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {isSaving ? "Saving..." : "Save to History"}
           </Button>
-          <Button asChild className="w-full" variant="outline">
-            <Link to="/camera">Take New Photo</Link>
+          
+          <Button variant="outline" onClick={handleTryAgain} className="w-full">
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Try Another Style
+          </Button>
+
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/transform")}
+            className="w-full"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Try Different Transformation
           </Button>
         </div>
 
-        {/* Premium Upgrade Banner */}
-        <Card className="mt-8 bg-gradient-primary text-primary-foreground">
-          <CardContent className="p-6 text-center">
-            <Heart className="h-8 w-8 mx-auto mb-3 text-accent" />
-            <h3 className="text-lg font-semibold mb-2">Love Your Look?</h3>
-            <p className="text-primary-foreground/90 text-sm mb-4">
-              Unlock unlimited transformations and HD downloads
-            </p>
-            <Button variant="secondary" className="bg-accent text-accent-foreground hover:bg-accent/90">
-              Upgrade to Premium
-            </Button>
-          </CardContent>
+        {/* Tips */}
+        <Card className="mt-6 p-4 bg-muted/50">
+          <h3 className="font-medium text-foreground mb-2">💡 Pro Tips:</h3>
+          <ul className="text-sm text-muted-foreground space-y-1">
+            <li>• Save your favorite looks to easily find them later</li>
+            <li>• Share transformations with friends on social media</li>
+            <li>• Try different lighting and angles for best results</li>
+          </ul>
         </Card>
       </div>
     </div>

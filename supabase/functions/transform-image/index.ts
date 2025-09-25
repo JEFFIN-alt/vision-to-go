@@ -62,8 +62,10 @@ serve(async (req) => {
       }
     }
 
-    const prompt = prompts[category as keyof typeof prompts]?.[style] || 
-                  `Transform this person with ${style} style, keeping facial features identical`
+    const categoryPrompts = prompts[category as keyof typeof prompts];
+    const prompt = (categoryPrompts && typeof categoryPrompts === 'object' && style in categoryPrompts) 
+      ? (categoryPrompts as Record<string, string>)[style]
+      : `Transform this person with ${style} style, keeping facial features identical`
 
     // Check if we have OpenAI API key configured
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY')

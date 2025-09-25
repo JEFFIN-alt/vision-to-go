@@ -79,7 +79,7 @@ Keep responses conversational, helpful, and under 200 words. Always encourage th
     
     // Fallback response for when API is unavailable
     const fallbackResponses = [
-      `Hi ${userName || 'beautiful'}! 💄 I'd love to help you with your style journey! Here are some quick tips: consider your face shape when choosing hairstyles, experiment with colors that complement your skin tone, and remember - confidence is your best accessory! ✨`,
+      `Hi beautiful! 💄 I'd love to help you with your style journey! Here are some quick tips: consider your face shape when choosing hairstyles, experiment with colors that complement your skin tone, and remember - confidence is your best accessory! ✨`,
       `Hey there! 🌟 For personalized style advice, I'd recommend: 1) Try colors that make your eyes pop, 2) Choose hairstyles that frame your face beautifully, 3) Don't be afraid to experiment - makeup washes off! What specific look are you going for?`,
       `Hello gorgeous! 💖 The best style advice I can give is to start with what makes YOU feel confident. Whether it's a bold lip color, a new hairstyle, or experimenting with different makeup looks - your unique style is what makes you beautiful! What would you like to try first?`
     ];
