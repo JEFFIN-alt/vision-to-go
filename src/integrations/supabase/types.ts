@@ -53,6 +53,39 @@ export type Database = {
         }
         Relationships: []
       }
+      jobs_log: {
+        Row: {
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          job_name: string
+          metadata: Json | null
+          retry_count: number | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          job_name: string
+          metadata?: Json | null
+          retry_count?: number | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          job_name?: string
+          metadata?: Json | null
+          retry_count?: number | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           analytics_enabled: boolean | null
@@ -98,6 +131,7 @@ export type Database = {
       transformations: {
         Row: {
           created_at: string
+          expires_at: string | null
           id: string
           is_favorite: boolean | null
           original_image_url: string
@@ -109,6 +143,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          expires_at?: string | null
           id?: string
           is_favorite?: boolean | null
           original_image_url: string
@@ -120,6 +155,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          expires_at?: string | null
           id?: string
           is_favorite?: boolean | null
           original_image_url?: string
@@ -131,12 +167,85 @@ export type Database = {
         }
         Relationships: []
       }
+      trending_styles: {
+        Row: {
+          category: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          metadata: Json | null
+          source: string
+          style_name: string
+          trend_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          source: string
+          style_name: string
+          trend_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          source?: string
+          style_name?: string
+          trend_score?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_data_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          request_type: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          request_type: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          request_type?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_expired_transformations: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_expired_trends: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
