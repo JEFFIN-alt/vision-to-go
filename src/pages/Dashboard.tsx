@@ -161,9 +161,9 @@ const Dashboard = () => {
       {aiMinimized && (
         <Button
           onClick={() => setAiMinimized(false)}
-          className="fixed bottom-20 right-4 w-12 h-12 rounded-full bg-gradient-primary text-primary-foreground shadow-glow hover:shadow-accent-glow z-40"
+          className="fixed bottom-32 right-4 w-14 h-14 rounded-full bg-gradient-primary text-primary-foreground shadow-glow hover:shadow-accent-glow z-40 md:bottom-40 md:right-6"
         >
-          <Sparkles className="h-5 w-5" />
+          <Sparkles className="h-6 w-6" />
         </Button>
       )}
 

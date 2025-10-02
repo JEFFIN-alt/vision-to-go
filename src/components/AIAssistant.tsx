@@ -153,7 +153,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onMinimize }
   if (!isOpen) return null;
 
   return (
-    <Card className="fixed bottom-20 right-4 w-80 h-96 bg-card border-2 border-primary/20 shadow-glow z-50 flex flex-col">
+    <Card className="fixed bottom-32 right-4 w-80 h-[500px] bg-card border-2 border-primary/20 shadow-glow z-50 flex flex-col md:bottom-40 md:right-6 md:w-96 md:h-[600px]">
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-2 bg-gradient-primary text-primary-foreground rounded-t-lg">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5" />
@@ -252,21 +252,21 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onMinimize }
           </div>
         )}
 
-        <div className="p-4 border-t">
+        <div className="p-4 border-t bg-muted/30">
           <div className="flex gap-2">
             <Input
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask Sofie about styles, trends, tips..."
-              className="flex-1"
+              className="flex-1 bg-background border-primary/20 focus:border-primary"
               disabled={isLoading}
             />
             <Button 
               onClick={() => handleSendMessage()} 
               disabled={!inputMessage.trim() || isLoading}
               size="sm"
-              className="px-3"
+              className="px-4 bg-gradient-primary text-primary-foreground"
             >
               <Send className="h-4 w-4" />
             </Button>
