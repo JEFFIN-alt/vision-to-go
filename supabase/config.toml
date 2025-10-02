@@ -1,1 +1,64 @@
 project_id = "owbdprrjmzwqajhyynrn"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[graphql]
+enabled = true
+port = 54324
+db_schema = "public"
+api_host = "0.0.0.0"
+
+[inbucket]
+enabled = true
+port = 54325
+smtp_port = 54326
+pop3_port = 54327
+
+[realtime]
+enabled = true
+port = 54327
+ip_version = "ipv4"
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1:54321"
+
+[auth]
+enabled = true
+port = 54324
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["https://127.0.0.1:3000"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+security_update_password_require_reauthentication = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+security_manual_linking_enabled = false
+
+[db]
+port = 54322
+
+[functions.ai-style-assistant]
+
+[functions.detect-gender]
+
+[functions.transform-image]
+
+[functions.fetch-trends]
+verify_jwt = false
+
+[functions.face-analysis-server]
+
+[functions.sofie-chat-streaming]
+
+[functions.cleanup-expired-data]
+verify_jwt = false
