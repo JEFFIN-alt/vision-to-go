@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,8 +25,8 @@ serve(async (req) => {
       });
     }
 
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+    if (!lovableApiKey) {
+      throw new Error('Lovable API key not configured');
     }
 
     const systemPrompt = `You are Sofie, the AI style assistant for LOOKMAGIC - a revolutionary beauty transformation app that uses AI to help users visualize style changes before making them.
@@ -80,24 +80,24 @@ Guidelines:
 
     console.log(`Processing request for user: ${userName}, message length: ${message.length}`);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
-        messages: messages.slice(-10), // Keep last 10 messages for context
-        max_completion_tokens: 250,
-        // temperature not supported for gpt-4.1
+        model: 'google/gemini-2.5-flash',
+        messages: messages.slice(-10),
+        max_tokens: 250,
+        temperature: 0.8,
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('Lovable AI Gateway error:', errorData);
+      throw new Error(`AI Gateway error: ${response.status}`);
     }
 
     const data = await response.json();
