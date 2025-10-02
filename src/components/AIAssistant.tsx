@@ -153,7 +153,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onMinimize }
   if (!isOpen) return null;
 
   return (
-    <Card className="fixed bottom-4 right-4 w-80 h-96 bg-card border-2 border-primary/20 shadow-glow z-50 flex flex-col">
+    <Card className="fixed bottom-20 right-4 w-80 h-96 bg-card border-2 border-primary/20 shadow-glow z-50 flex flex-col">
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-2 bg-gradient-primary text-primary-foreground rounded-t-lg">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5" />

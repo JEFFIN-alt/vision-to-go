@@ -15,7 +15,7 @@ const Dashboard = () => {
   const userName = user?.email?.split('@')[0] || 'Beautiful';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="flex items-center justify-between p-4 bg-card border-b border-border">
         <div>
@@ -44,7 +44,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="container mx-auto px-4 py-6 space-y-6 pb-32">
         {/* Confidence Quotes */}
         <ConfidenceQuotes />
 
@@ -161,7 +161,7 @@ const Dashboard = () => {
       {aiMinimized && (
         <Button
           onClick={() => setAiMinimized(false)}
-          className="fixed bottom-4 right-4 w-12 h-12 rounded-full bg-gradient-primary text-primary-foreground shadow-glow hover:shadow-accent-glow z-40"
+          className="fixed bottom-20 right-4 w-12 h-12 rounded-full bg-gradient-primary text-primary-foreground shadow-glow hover:shadow-accent-glow z-40"
         >
           <Sparkles className="h-5 w-5" />
         </Button>
