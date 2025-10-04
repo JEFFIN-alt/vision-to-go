@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      face_reports: {
+        Row: {
+          analysis_data: Json
+          confidence_score: number | null
+          created_at: string
+          face_shape: string | null
+          id: string
+          skin_tone: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_data: Json
+          confidence_score?: number | null
+          created_at?: string
+          face_shape?: string | null
+          id?: string
+          skin_tone?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_data?: Json
+          confidence_score?: number | null
+          created_at?: string
+          face_shape?: string | null
+          id?: string
+          skin_tone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      feature_flags: {
+        Row: {
+          description: string | null
+          flag_key: string
+          id: string
+          is_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          description?: string | null
+          flag_key: string
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          description?: string | null
+          flag_key?: string
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           admin_response: string | null
@@ -86,6 +167,77 @@ export type Database = {
         }
         Relationships: []
       }
+      product_clicks: {
+        Row: {
+          clicked_at: string
+          id: string
+          product_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          id?: string
+          product_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          id?: string
+          product_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_clicks_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          affiliate_link: string
+          category: string
+          click_count: number | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          price: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_link: string
+          category: string
+          click_count?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          price?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_link?: string
+          category?: string
+          click_count?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          price?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           analytics_enabled: boolean | null
@@ -125,6 +277,33 @@ export type Database = {
           theme_preference?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      quotes: {
+        Row: {
+          author: string | null
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          quote_text: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          quote_text: string
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          quote_text?: string
         }
         Relationships: []
       }
@@ -233,6 +412,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -246,9 +446,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -375,6 +586,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

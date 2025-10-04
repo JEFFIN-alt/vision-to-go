@@ -35,7 +35,7 @@ const Camera = () => {
 
   const handleCapturePhoto = async () => {
     try {
-      const photoData = capturePhoto();
+      const photoData = await capturePhoto();
       if (photoData) {
         setCurrentPhoto(photoData);
         

@@ -38,7 +38,7 @@ export const useCamera = () => {
     }
   }, []);
 
-  const capturePhoto = useCallback((): string | null => {
+  const capturePhoto = useCallback(async (): Promise<string | null> => {
     if (!videoRef.current || !canvasRef.current) return null;
 
     const canvas = canvasRef.current;
@@ -59,8 +59,10 @@ export const useCamera = () => {
     }
     
     const photoData = canvas.toDataURL('image/jpeg', 0.9);
-    // Auto-stop camera after capture
-    stopCamera();
+    
+    // CRITICAL: Stop all MediaStream tracks to turn off camera hardware
+    await stopCamera();
+    
     return photoData;
   }, [facingMode, stopCamera]);
 

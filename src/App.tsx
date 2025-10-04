@@ -13,6 +13,7 @@ import Camera from "./pages/Camera";
 import Upload from "./pages/Upload";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
+import Admin from "./pages/Admin";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import Transform from "./pages/Transform";
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="/transform" element={<ProtectedRoute><Transform /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
