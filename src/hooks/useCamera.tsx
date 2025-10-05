@@ -29,11 +29,24 @@ export const useCamera = () => {
     }
   }, [facingMode]);
 
-  const stopCamera = useCallback(() => {
+  const stopCamera = useCallback(async () => {
     if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
+      const stream = videoRef.current.srcObject as MediaStream;
+      const tracks = stream.getTracks();
+      
+      // Stop all tracks immediately
+      tracks.forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
+      
+      // Clear the video source
       videoRef.current.srcObject = null;
+      videoRef.current.src = '';
+      
+      // Small delay to ensure hardware releases
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       setIsStreaming(false);
     }
   }, []);
@@ -66,8 +79,8 @@ export const useCamera = () => {
     return photoData;
   }, [facingMode, stopCamera]);
 
-  const switchCamera = useCallback(() => {
-    stopCamera();
+  const switchCamera = useCallback(async () => {
+    await stopCamera();
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   }, [stopCamera]);
 

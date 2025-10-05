@@ -30,7 +30,9 @@ const Camera = () => {
 
   useEffect(() => {
     startCamera();
-    return () => stopCamera();
+    return () => {
+      stopCamera();
+    };
   }, [startCamera, stopCamera]);
 
   const handleCapturePhoto = async () => {
