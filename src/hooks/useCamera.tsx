@@ -34,6 +34,9 @@ export const useCamera = () => {
       const stream = videoRef.current.srcObject as MediaStream;
       const tracks = stream.getTracks();
       
+      // Pause video first
+      videoRef.current.pause();
+      
       // Stop all tracks immediately
       tracks.forEach(track => {
         track.stop();
@@ -43,6 +46,7 @@ export const useCamera = () => {
       // Clear the video source
       videoRef.current.srcObject = null;
       videoRef.current.src = '';
+      videoRef.current.load(); // Force reload to clear any buffered data
       
       // Small delay to ensure hardware releases
       await new Promise(resolve => setTimeout(resolve, 100));
