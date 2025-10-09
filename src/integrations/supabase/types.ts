@@ -41,6 +41,42 @@ export type Database = {
         }
         Relationships: []
       }
+      face_analysis_cache: {
+        Row: {
+          analysis_data: Json
+          confidence_score: number | null
+          created_at: string | null
+          detected_age_range: string | null
+          detected_emotion: string | null
+          detected_gender: string | null
+          id: string
+          image_hash: string
+          user_id: string
+        }
+        Insert: {
+          analysis_data: Json
+          confidence_score?: number | null
+          created_at?: string | null
+          detected_age_range?: string | null
+          detected_emotion?: string | null
+          detected_gender?: string | null
+          id?: string
+          image_hash: string
+          user_id: string
+        }
+        Update: {
+          analysis_data?: Json
+          confidence_score?: number | null
+          created_at?: string | null
+          detected_age_range?: string | null
+          detected_emotion?: string | null
+          detected_gender?: string | null
+          id?: string
+          image_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       face_reports: {
         Row: {
           analysis_data: Json

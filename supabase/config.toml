@@ -62,3 +62,9 @@ verify_jwt = false
 
 [functions.cleanup-expired-data]
 verify_jwt = false
+
+[functions.transform-image-ai]
+
+[functions.face-analysis-enhanced]
+
+[functions.sofie-chat-pro]
